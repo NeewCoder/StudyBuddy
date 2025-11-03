@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <title>StudyBuddy – Демо</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root { --sb-bg:#f6f7fb; --sb-card:#ffffff; --sb-shadow:0 4px 18px rgba(0,0,0,.06); }
+    body { background:var(--sb-bg); }
+    .container { max-width: 1140px; }
+    .panel { background:var(--sb-card); border-radius:14px; padding:18px; box-shadow:var(--sb-shadow); }
+    pre { white-space: pre-wrap; margin:0; }
+    .img-wrap { max-height: 520px; overflow:auto; border-radius:10px; }
+    .muted { color:#6c757d; }
+    .quiz-card { border:1px solid #eaeaea; border-radius:12px; padding:14px; margin-bottom:14px; background:#fff; }
+    .form-check { padding:.25rem .5rem; border-radius:8px; }
+    .form-check.correct { background:#e8f5ea; border:1px solid #b8e1c1; }
+    .form-check.wrong   { background:#fdeaea; border:1px solid #f1c0c0; }
+    .answer-badge { font-size:.75rem; }
+    .sticky-header { position:sticky; top:0; background:var(--sb-card); z-index:2; padding-bottom:10px; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar bg-primary navbar-dark mb-3">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="{{ url_for('index') }}"><i class="bi bi-mortarboard"></i> StudyBuddy</a>
+    <div class="d-flex gap-2 align-items-center">
+      <a class="btn btn-outline-light btn-sm" href="{{ url_for('history') }}"><i class="bi bi-clock-history me-1"></i>История</a>
+      <form class="d-flex" action="{{ url_for('analyze') }}" method="post" enctype="multipart/form-data">
+        <input class="form-control form-control-sm me-2" type="file" name="image" accept="image/*" required>
+        <button class="btn btn-light btn-sm" type="submit"><i class="bi bi-plus-lg"></i> Нов анализ</button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ 'warning' if cat=='warning' else 'danger' if cat=='danger' else 'info' }} py-2">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row g-3">
+    <!-- Лява колона: снимка -->
+    <div class="col-lg-5">
+      <div class="panel">
+        <div class="d-flex justify-content-between align-items-center mb-2 sticky-header">
+          <h5 class="mb-0">Качено изображение</h5>
+          {% if analysis_id %}<span class="badge text-bg-secondary">ID: {{ analysis_id }}</span>{% endif %}
+        </div>
+        {% if image_filename %}
+          <div class="img-wrap border">
+            <img src="{{ url_for('uploaded_file', fname=image_filename) }}" class="img-fluid" alt="uploaded">
+          </div>
+        {% else %}
+          <div class="muted">Качи снимка на страница от учебник, за да започнеш.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Дясна колона: текстове + тест -->
+    <div class="col-lg-7">
+      <div class="panel mb-3">
+        <h5 class="mb-2">Обобщение</h5>
+        <div class="muted">
+          {% if summary %}<pre>{{ summary }}</pre>{% else %}<em>Още няма обобщение.</em>{% endif %}
+        </div>
+      </div>
+
+      <div class="panel mb-3">
+        <h5 class="mb-2">Лесен за учене вариант</h5>
+        <div class="muted">
+          {% if simple_text %}<pre>{{ simple_text }}</pre>{% else %}<em>Тук ще се появи опростеният текст.</em>{% endif %}
+        </div>
+      </div>
+
+      <div class="panel mb-3">
+        <h5 class="mb-2">Извлечен текст (OCR)</h5>
+        <div class="muted">
+          {% if ocr_text %}<pre>{{ ocr_text }}</pre>{% else %}<em>Още няма извлечен текст.</em>{% endif %}
+        </div>
+      </div>
+
+      <!-- Тест -->
+      <div class="panel">
+        <div class="d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Генериран тест</h5>
+          <div class="d-flex gap-2">
+            <button id="resetQuizBtn" class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-arrow-counterclockwise"></i> Изчисти</button>
+            <button id="genQuizBtn" class="btn btn-primary btn-sm" {% if not ocr_text %}disabled{% endif %}>
+              <i class="bi bi-magic"></i> Генерирай тест
+            </button>
+          </div>
+        </div>
+
+        <div id="quizSummary" class="mt-3"></div>
+        <div id="quizZone" class="mt-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const genBtn   = document.getElementById('genQuizBtn');
+const resetBtn = document.getElementById('resetQuizBtn');
+const zone     = document.getElementById('quizZone');
+const summary  = document.getElementById('quizSummary');
+
+let lastQuiz = null;
+
+if (genBtn) {
+  genBtn.addEventListener('click', async () => {
+    genBtn.disabled = true;
+    resetBtn.disabled = true;
+    zone.innerHTML = '<div class="text-muted small">Генерирам тест…</div>';
+    summary.innerHTML = '';
+    try {
+      const res = await fetch('{{ url_for("generate_quiz") }}', {method:'POST'});
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Грешка при генериране.');
+      lastQuiz = data.quiz;
+      renderQuiz(lastQuiz);
+      resetBtn.disabled = false;
+    } catch (e) {
+      zone.innerHTML = '<div class="alert alert-danger py-2">Неуспешно: ' + e.message + '</div>';
+    } finally {
+      genBtn.disabled = false;
+    }
+  });
+}
+
+if (resetBtn) {
+  resetBtn.addEventListener('click', () => {
+    if (!lastQuiz) return;
+    renderQuiz(lastQuiz);  // рендер отначало
+    summary.innerHTML = '';
+  });
+}
+
+function renderQuiz(items){
+  if (!items || !items.length){
+    zone.innerHTML = '<div class="text-muted">Няма въпроси.</div>';
+    return;
+  }
+  let html = '<form id="quizForm" class="mt-2">';
+  items.forEach((q,i)=>{
+    html += `
+      <div class="quiz-card" id="qc${i}">
+        <div class="fw-semibold mb-2">${i+1}. ${escapeHTML(q.q)}</div>
+        ${q.options.map((opt,idx)=>`
+          <div class="form-check" id="q${i}o${idx}-wrap">
+            <input class="form-check-input" type="radio" name="q${i}" id="q${i}o${idx}" value="${idx}">
+            <label class="form-check-label" for="q${i}o${idx}">${escapeHTML(opt)}</label>
+          </div>`).join('')}
+        <input type="hidden" id="ans${i}" value="${q.answer}">
+        <div class="mt-2 small" id="fb${i}"></div>
+      </div>`;
+  });
+  html += `
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-success" onclick="gradeQuiz(${items.length})"><i class="bi bi-check2-circle"></i> Провери</button>
+      <button type="button" class="btn btn-outline-secondary" onclick="revealAnswers(${items.length})"><i class="bi bi-eye"></i> Покажи верните</button>
+    </div>`;
+  html += `</form>`;
+  zone.innerHTML = html;
+}
+
+function gradeQuiz(n){
+  let correct = 0;
+  for (let i=0;i<n;i++){
+    // очисти предишно оцветяване
+    for (let k=0;k<4;k++){
+      const wrap = document.getElementById(`q${i}o${k}-wrap`);
+      wrap.classList.remove('correct','wrong');
+    }
+    const user = document.querySelector('input[name="q'+i+'"]:checked');
+    const ans  = document.getElementById('ans'+i).value;
+    const fb   = document.getElementById('fb'+i');
+
+    if (user){
+      if (String(user.value) === String(ans)){
+        correct++;
+        document.getElementById(`q${i}o${user.value}-wrap`).classList.add('correct');
+        fb.innerHTML = `<span class="badge text-bg-success answer-badge"><i class="bi bi-check2"></i> Верен отговор</span>`;
+      } else {
+        document.getElementById(`q${i}o${user.value}-wrap`).classList.add('wrong');
+        document.getElementById(`q${i}o${ans}-wrap`).classList.add('correct');
+        fb.innerHTML = `<span class="badge text-bg-danger answer-badge"><i class="bi bi-x"></i> Грешен. Вярно: вариант ${"ABCD"[ans]}</span>`;
+      }
+    } else {
+      document.getElementById(`q${i}o${ans}-wrap`).classList.add('correct');
+      fb.innerHTML = `<span class="badge text-bg-secondary answer-badge"><i class="bi bi-exclamation-circle"></i> Няма избран отговор. Вярно: ${"ABCD"[ans]}</span>`;
+    }
+  }
+  const percent = Math.round((correct/n)*100);
+  summary.innerHTML = `
+    <div class="alert alert-info py-2 mb-2">
+      Резултат: <b>${correct}</b> от ${n} (${percent}%)
+    </div>
+    <div class="progress" role="progressbar" aria-label="Резултат">
+      <div class="progress-bar bg-success" style="width:${percent}%"></div>
+    </div>`;
+}
+
+function revealAnswers(n){
+  for (let i=0;i<n;i++){
+    for (let k=0;k<4;k++){
+      const wrap = document.getElementById(`q${i}o${k}-wrap`);
+      wrap.classList.remove('correct','wrong');
+    }
+    const ans = document.getElementById('ans'+i).value;
+    document.getElementById(`q${i}o${ans}-wrap`).classList.add('correct');
+    document.getElementById('fb'+i).innerHTML =
+      `<span class="badge text-bg-primary answer-badge"><i class="bi bi-lightbulb"></i> Вярно: вариант ${"ABCD"[ans]}</span>`;
+  }
+  summary.innerHTML = `<div class="alert alert-secondary py-2 mb-0">Показани са верните отговори.</div>`;
+}
+
+function escapeHTML(s){
+  return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+</script>
+</body>
+</html>
