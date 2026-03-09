@@ -1,0 +1,22 @@
+pre {
+  white-space: pre-wrap;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.card-header {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+body {
+  background-color: #f2f5f8;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}

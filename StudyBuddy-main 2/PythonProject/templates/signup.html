@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <title>Регистрация – StudyBuddy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{
+      --sb-bg: #f5f7fb;
+      --sb-card: #ffffff;
+      --sb-primary: #2563eb;
+      --sb-primary-dark: #1d4ed8;
+      --sb-text: #0f172a;
+      --sb-muted: #64748b;
+      --sb-border: #e2e8f0;
+      --sb-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top left, #dbeafe 0%, transparent 30%),
+        radial-gradient(circle at top right, #e9d5ff 0%, transparent 25%),
+        var(--sb-bg);
+      min-height: 100vh;
+      color: var(--sb-text);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      background: rgba(255,255,255,0.8);
+      border-bottom: 1px solid rgba(226,232,240,0.8);
+    }
+
+    .topbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 1.6rem;
+      color: var(--sb-text);
+      text-decoration: none;
+    }
+
+    .brand-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--sb-primary), #7c3aed);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 8px 20px rgba(37,99,235,0.25);
+      font-size: 1.2rem;
+    }
+
+    .btn-soft {
+      background: #fff;
+      border: 1px solid var(--sb-border);
+      color: var(--sb-text);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .btn-soft:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: var(--sb-text);
+    }
+
+    .page-wrap {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 36px 18px 40px;
+    }
+
+    .signup-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, rgba(37,99,235,0.98), rgba(124,58,237,0.95));
+      color: #fff;
+      border-radius: 28px;
+      padding: 34px;
+      box-shadow: 0 16px 40px rgba(37,99,235,0.18);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      top: -90px;
+      right: -50px;
+      background: rgba(255,255,255,0.10);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-card h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      line-height: 1.08;
+      margin-bottom: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-card p {
+      font-size: 1.04rem;
+      color: rgba(255,255,255,0.92);
+      max-width: 650px;
+      margin-bottom: 0;
+      position: relative;
+      z-index: 1;
+      line-height: 1.6;
+    }
+
+    .form-card {
+      background: var(--sb-card);
+      border: 1px solid var(--sb-border);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: var(--sb-shadow);
+    }
+
+    .form-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .form-subtitle {
+      color: var(--sb-muted);
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    .form-label {
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .form-control {
+      border-radius: 14px;
+      border: 1px solid #dbe3ee;
+      padding: 12px 14px;
+    }
+
+    .form-control:focus {
+      box-shadow: 0 0 0 0.2rem rgba(37,99,235,0.15);
+      border-color: #93c5fd;
+    }
+
+    .btn-primary-sb {
+      background: linear-gradient(135deg, var(--sb-primary), var(--sb-primary-dark));
+      border: none;
+      color: #fff;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 700;
+      box-shadow: 0 8px 20px rgba(37,99,235,0.25);
+    }
+
+    .btn-primary-sb:hover {
+      opacity: 0.96;
+      color: #fff;
+    }
+
+    .switch-box {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #eef2f7;
+      color: var(--sb-muted);
+    }
+
+    .switch-box a {
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    @media (max-width: 992px) {
+      .signup-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('index') }}">
+        <span class="brand-badge"><i class="bi bi-mortarboard-fill"></i></span>
+        <span>StudyBuddy</span>
+      </a>
+
+      <a class="btn-soft" href="{{ url_for('index') }}">
+        <i class="bi bi-house-door me-1"></i> Начало
+      </a>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-3">
+          {% for cat, msg in messages %}
+            <div class="alert alert-{{ 'warning' if cat=='warning' else 'danger' if cat=='danger' else 'info' }} border-0 shadow-sm">
+              {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="signup-grid">
+      <div class="hero-card">
+        <div class="hero-badge">
+          <i class="bi bi-person-plus"></i>
+          Създай профил
+        </div>
+
+        <h1>Направи свой акаунт в StudyBuddy</h1>
+        <p>
+          Регистрирай се, за да качваш изображения, да запазваш своите анализи
+          и да виждаш личната си история в приложението.
+        </p>
+      </div>
+
+      <div class="form-card">
+        <div class="form-title">Нова регистрация</div>
+        <div class="form-subtitle">
+          Създай потребителски профил и започни да използваш StudyBuddy.
+        </div>
+
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Потребителско име</label>
+            <input class="form-control" name="username" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Парола</label>
+            <input type="password" class="form-control" name="password" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Повтори паролата</label>
+            <input type="password" class="form-control" name="confirm_password" required>
+          </div>
+
+          <button class="btn btn-primary-sb w-100" type="submit">
+            <i class="bi bi-person-check me-1"></i> Регистрация
+          </button>
+        </form>
+
+        <div class="switch-box">
+          Вече имаш акаунт?
+          <a href="{{ url_for('login') }}">Влез в профила си</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

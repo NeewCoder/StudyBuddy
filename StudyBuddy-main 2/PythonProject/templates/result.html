@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Резултат{% endblock %}
+{% block content %}
+<a href="{{ url_for('index') }}" class="btn btn-outline-secondary mb-3">← Нов анализ</a>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-semibold">Качено изображение</div>
+      <div class="card-body">
+        <img class="img-fluid rounded" src="{{ url_for('uploaded_file', filename=image_filename) }}" alt="uploaded">
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header fw-semibold">Обобщение</div>
+      <div class="card-body">
+        <p class="mb-0">{{ summary }}</p>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+      <div class="card-header fw-semibold">Извлечен текст (OCR)</div>
+      <div class="card-body">
+        <pre class="mb-0 text-wrap">{{ extracted_text }}</pre>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">Генериран тест</div>
+      <div class="card-body">
+        {% for q in quiz %}
+          <div class="mb-3">
+            <strong>{{ q.question }}</strong>
+            <ul class="mb-1">
+              {% for a in q.answers %}<li>{{ a }}</li>{% endfor %}
+            </ul>
+            <small class="text-muted">Правилен: {{ q.correct }}</small>
+          </div>
+          {% if not loop.last %}<hr>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
